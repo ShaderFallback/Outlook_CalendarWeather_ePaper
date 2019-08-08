@@ -37,21 +37,21 @@ tempArray = ["------"]*13
 #获取天气
 def getTemp():
     try:
-        r = requests.get('http://t.weather.sojson.com/api/weather/city/101010100') #获取 天气API
+        r = requests.get('http://t.weather.sojson.com/api/weather/city/101010100') 
         r.encoding = 'utf-8'
         tempList = [
-        (r.json()['cityInfo']['city']),
-        (r.json()['data']['forecast'][0]['low']), #最低温度
-        (r.json()['data']['forecast'][0]['high']), #最高温度
-        "湿度: " +(r.json()['data']['shidu']),
-        "PM 2.5: " +str(r.json()['data']['pm25']),       
-        (r.json()['data']['forecast'][0]['fx']),
-        (r.json()['data']['forecast'][0]['fl']),
-        "空气质量: " +(r.json()['data']['quality']),
-        (r.json()['cityInfo']['updateTime'])+ "更新",
-        (r.json()['data']['forecast'][0]['type']), #今日天气
-        (r.json()['data']['forecast'][0]['notice']), #今日天气
-        (r.json()['data']['forecast'][1]['type']), #明日天气
+        (r.json()['cityInfo']['city']),             #城市
+        (r.json()['data']['forecast'][0]['low']),   #最低温度
+        (r.json()['data']['forecast'][0]['high']),  #最高温度
+        (r.json()['data']['shidu']),                #湿度
+        str(r.json()['data']['pm25']),              #Pm2.5
+        (r.json()['data']['forecast'][0]['fx']),    #风向
+        (r.json()['data']['forecast'][0]['fl']),    #风力
+        (r.json()['data']['quality']),              #空气质量
+        (r.json()['cityInfo']['updateTime']),       #更新时间
+        (r.json()['data']['forecast'][0]['type']),  #今日天气
+        (r.json()['data']['forecast'][0]['notice']),#今日天气
+        (r.json()['data']['forecast'][1]['type']),  #明日天气
         (r.json()['data']['forecast'][1]['notice']) #明日天气
         ]
     except:
@@ -99,9 +99,9 @@ def UpdateWeatherIcon(tempType):  #匹配天气类型图标
     elif(tempType == "雾"):
         return "雾fog.bmp"
     elif(tempType == "沙尘暴" or tempType == "浮尘" or
-         tempType == "扬沙" or tempType == "强沙尘暴" or
-         tempType == "雾霾"):
-         return "沙尘暴sand.bmp"
+        tempType == "扬沙" or tempType == "强沙尘暴" or
+        tempType == "雾霾"):
+        return "沙尘暴sand.bmp"
     elif(tempType == "冻雨"):
         return "冻雨ice_rain.bmp"
     elif(tempType == "雷阵雨伴有冰雹"):
@@ -156,10 +156,10 @@ while (True):
 
     timeUpdate = datetime.datetime.now()
     strtime = timeUpdate.strftime('%Y-%m-%d') #年月日
-    strtime2 = timeUpdate.strftime('%H:%M') #时间
-    strtime3 = timeUpdate.strftime('%M') #分钟
-    strtime4 = timeUpdate.strftime('%w') #星期
-    strtime5 = timeUpdate.strftime('%H') #小时
+    strtime2 = timeUpdate.strftime('%H:%M')   #时间
+    strtime3 = timeUpdate.strftime('%M')      #分钟
+    strtime4 = timeUpdate.strftime('%w')      #星期
+    strtime5 = timeUpdate.strftime('%H')      #小时
     
     if(strtime4 != oilStrWeek):  #每天重置更新天气
         weekStr = todayWeek(strtime4)
@@ -184,19 +184,16 @@ while (True):
 
     # 天气API 只有这几个点会更新,减少无用请求
     intTime = int(strtime5)
-    # 9点更新天气
+
     if(intTime >= 9 and intTime <= 10 and countUpdate_1):
-        print("9点更新天气")
         tempArray = UpdateData()
         countUpdate_1 = False
         epd.Clear()
     elif(intTime >= 14 and intTime <= 15 and countUpdate_2):
-        print("14点更新天气")
         tempArray = UpdateData()
         countUpdate_2 = False
         epd.Clear()
     elif(intTime >= 20 and intTime <= 21 and countUpdate_3):
-        print("20点更新天气")
         tempArray = UpdateData()
         countUpdate_3 = False
         epd.Clear()
@@ -204,9 +201,9 @@ while (True):
 
     #显示城市/更新时间
     draw.text((15, 335), tempArray[0], font = fontTempSize, fill = 0)
-    draw.text((110, 335), tempArray[8], font = fontTempSize, fill = 0)
+    draw.text((110, 335), tempArray[8] + "更新", font = fontTempSize, fill = 0)
 
-    #显示温度 (它自带的字库不能显示℃  =_=！)
+    #显示温度 (自带的字库不能显示℃ ,更换字体文件可解决)
     temp_L = tempArray[1].replace("低温","")
     temp_L = temp_L.replace("℃","")
     temp_L = temp_L.replace(" ","")
@@ -216,13 +213,13 @@ while (True):
     draw.text((70,90), temp_L+"~"+temp_H+"度", font = fontTempSize, fill = 0)  
     
     #显示湿度
-    draw.text((70,133), tempArray[3], font = fontTempSize, fill = 0)
+    draw.text((70,133),"湿度: "+ tempArray[3], font = fontTempSize, fill = 0)
     #显示PM2.5
-    draw.text((70,177), tempArray[4], font = fontTempSize, fill = 0)
+    draw.text((70,177),"PM 2.5: "+ tempArray[4], font = fontTempSize, fill = 0)
     #显示风向
     draw.text((70,225), tempArray[5] +" "+ tempArray[6], font = fontTempSize, fill = 0)
     #空气质量
-    draw.text((70,266), tempArray[7], font = fontTempSize, fill = 0)
+    draw.text((70,266),"空气质量: "+ tempArray[7], font = fontTempSize, fill = 0)
     
 
     if(SwitchDay):#天气滚动
