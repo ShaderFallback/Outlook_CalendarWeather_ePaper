@@ -22,7 +22,7 @@
 - **修改城市 WeatherStation.py 24行 网址末尾代码** 
 
 ``` python
-r =requests.get('http://t.weather.sojson.com/api/weather/city/101280701')
+r =requests.get('http://t.weather.sojson.com/api/weather/city/101010100')
 ```
 - **查询城市代码 请查看 city_code.json 文件**
 - **编辑 rc.local 文件 在 Exit 0 之前添加开机 启动项**
