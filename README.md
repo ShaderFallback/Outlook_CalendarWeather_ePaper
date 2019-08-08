@@ -1,4 +1,5 @@
-## 墨水屏天气站 
+## 墨水屏天气站
+![image](https://github.com/ShaderFallback/RaspberryPi-WeatherStation/blob/master/Demo.jpg)
 ### Raspberry Pi WeatherStation
 
 
