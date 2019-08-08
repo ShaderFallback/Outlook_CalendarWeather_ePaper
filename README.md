@@ -16,6 +16,7 @@
 [https://www.raspberrypi.org/downloads/](https://www.raspberrypi.org/downloads/)
 - **Python 3.0 以上**
 - **开启 gpio**
+- **安装 sudo**
 
 ### 使用
 - **解压文件到 home 目录下** 
@@ -38,3 +39,5 @@ PS 显示标尺  视图 > 标尺 ，在标尺上右键切换单位为 “像素�
 拉出参考线时就可以很容易确定 坐标位置**
 
 - **图片时彩色时将会被驱动自动转换，灰阶会以抖动（dithering）方式显示**
+
+- **有任何问题欢迎给我留言 :)**
