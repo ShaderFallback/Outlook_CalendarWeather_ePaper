@@ -1,7 +1,5 @@
-## 墨水屏天气站
+## 墨水屏天气站 WeatherStation by RaspberryPi
 ![image](https://github.com/ShaderFallback/RaspberryPi-WeatherStation/blob/master/Demo.jpg)
-### Raspberry Pi WeatherStation
-
 
 ### 硬件清单
 - **树莓派 ZeroW** 
