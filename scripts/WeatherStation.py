@@ -70,44 +70,17 @@ def UpdateWeatherText(tempArray,TodayTomorrow):
     return TextTemp
 
 def UpdateWeatherIcon(tempType):  #匹配天气类型图标
-    if(tempType == "多云"):
-        return "多云cloud.bmp"
-    elif(tempType == "晴"):
-        return "晴fine.bmp"
-    elif(tempType == "阴"):
-        return "阴overcast.bmp"
-    elif(tempType == "阵雨"):
-        return "阵雨quick_rain.bmp"
-    elif(tempType == "雷阵雨"):
-        return "雷阵雨lquick_rain.bmp"
-    elif(tempType == "小雨"):
-        return "小雨small_rain.bmp"
-    elif(tempType == "小到中雨"):
-        return "小到中雨stom_rain.bmp"
-    elif(tempType == "中雨"):
-        return "中雨mid_rain.bmp"
-    elif(tempType == "大雨"  or tempType == "中到大雨"):
-        return "大雨big_rain.bmp"
+    if(tempType == "大雨"  or tempType == "中到大雨"):
+        return "大雨.bmp"
     elif(tempType == "暴雨"  or tempType == "大暴雨" or 
         tempType == "特大暴雨" or tempType == "大到暴雨" or
         tempType == "暴雨到大暴雨" or tempType == "大暴雨到特大暴雨"):
-        return "暴雨mbig_rain.bmp"
-    elif(tempType == "雨夹雪"):
-        return "雨夹雪rain_snow.bmp"
-    elif(tempType == "阵雪"):
-        return "阵雪quick_snow.bmp"
-    elif(tempType == "雾"):
-        return "雾fog.bmp"
+        return "暴雨.bmp"
     elif(tempType == "沙尘暴" or tempType == "浮尘" or
         tempType == "扬沙" or tempType == "强沙尘暴" or
         tempType == "雾霾"):
-        return "沙尘暴sand.bmp"
-    elif(tempType == "冻雨"):
-        return "冻雨ice_rain.bmp"
-    elif(tempType == "雷阵雨伴有冰雹"):
-        return "雷阵雨伴有冰雹quick_rain_ice.bmp"
-    elif(tempType == "无天气类型"):
-        return "无天气类型unknown.bmp"
+        return "沙尘暴.bmp"
+    return (tempType + ".bmp")
         
 def todayWeek(nowWeek):
     if nowWeek == "0":
