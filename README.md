@@ -16,6 +16,7 @@
 [https://www.raspberrypi.org/downloads/](https://www.raspberrypi.org/downloads/)
 - **Python 3.0 以上**
 - **开启 gpio**
+- **安装 sudo**
 
 ### 使用
 - **解压文件到 home 目录下** 
