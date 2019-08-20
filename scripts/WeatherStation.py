@@ -27,6 +27,7 @@ oilStrWeek = ""
 countUpdate_1 = False
 countUpdate_2 = False
 countUpdate_3 = False
+countUpdate_4 = False
 SwitchDay = True
 weatherTextToday = [""]*2
 weatherTextTomorrow = [""]*2
@@ -140,6 +141,7 @@ while (True):
         countUpdate_1 = True
         countUpdate_2 = True
         countUpdate_3 = True
+        countUpdate_4 = True
         tempArray = UpdateData()
         epd.Clear()
 
@@ -150,7 +152,7 @@ while (True):
     #显示时间   
     draw.text((430, 0), strtime2, font = fontTimeSize, fill = 0)
     #显示年月日
-    draw.text((410, 340), strtime, font = fontDateSize, fill = 0)
+    draw.text((410, 335), strtime, font = fontDateSize, fill = 0)
     #显示图标
     bmp = Image.open(rootPath + '/pic/icon.png')
     Himage.paste(bmp,(15,80))
@@ -158,17 +160,21 @@ while (True):
     # 天气API 只有这几个点会更新,减少无用请求
     intTime = int(strtime5)
 
-    if(intTime >= 9 and intTime <= 10 and countUpdate_1):
+    if(countUpdate_1 and intTime == 7):
         tempArray = UpdateData()
         countUpdate_1 = False
         epd.Clear()
-    elif(intTime >= 14 and intTime <= 15 and countUpdate_2):
+    elif(countUpdate_2 and intTime == 11):
         tempArray = UpdateData()
         countUpdate_2 = False
         epd.Clear()
-    elif(intTime >= 20 and intTime <= 21 and countUpdate_3):
+    elif(countUpdate_3 and intTime == 16):
         tempArray = UpdateData()
         countUpdate_3 = False
+        epd.Clear()
+    elif(countUpdate_4 and intTime == 21):
+        tempArray = UpdateData()
+        countUpdate_4 = False
         epd.Clear()
         
 
@@ -198,16 +204,16 @@ while (True):
     if(SwitchDay):#天气滚动
         draw.text((348,90),"今日：", font = fontTempSize, fill = 0) 
         #显示天气图标
-        tempTypeIcon = Image.open(rootPath + '/pic/weatherType/' + weatherIconToday)
-        Himage.paste(tempTypeIcon,(454,90))
+        tempTypeIcon = Image.open(rootPath + "/pic/weatherType/" + weatherIconToday)
+        Himage.paste(tempTypeIcon,(450,90))
         draw.text((alignCenter(tempArray[9],30,479),177),tempArray[9], font = fontTempSize, fill = 0)
         draw.text((alignCenter(weatherTextToday[0],30,479),225),weatherTextToday[0], font = fontTempSize, fill = 0)
         draw.text((alignCenter(weatherTextToday[1],30,479),266),weatherTextToday[1], font = fontTempSize, fill = 0)
         SwitchDay = False
     else:
         draw.text((348,90),"明日：", font = fontTempSize, fill = 0)
-        tempTypeIcon = Image.open(rootPath + '/pic/weatherType/' + weatherIconTomorrow)
-        Himage.paste(tempTypeIcon,(454,90))
+        tempTypeIcon = Image.open(rootPath + "/pic/weatherType/" + weatherIconTomorrow)
+        Himage.paste(tempTypeIcon,(450,90))
         draw.text((alignCenter(tempArray[11],30,479),177),tempArray[11], font = fontTempSize, fill = 0)
         draw.text((alignCenter(weatherTextTomorrow[0],30,479),225),weatherTextTomorrow[0], font = fontTempSize, fill = 0)
         draw.text((alignCenter(weatherTextTomorrow[1],30,479),266),weatherTextTomorrow[1], font = fontTempSize, fill = 0)
@@ -221,7 +227,7 @@ while (True):
     epd.display(epd.getbuffer(Himage))
     #屏幕休眠
     epd.sleep()
-    if(intTime >= 2 and intTime <= 6): #2点～6点 每小时刷新一次
+    if(intTime >= 1 and intTime <= 6): #1点～6点 每小时刷新一次
         time.sleep(3600)
     else:
         time.sleep(360)
