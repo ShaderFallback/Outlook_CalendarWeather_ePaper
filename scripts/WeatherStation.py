@@ -12,10 +12,11 @@ sys.path.append(rootPath + "/lib")
 import epd7in5
 import epdconfig
 import time
-from PIL import Image,ImageDraw,ImageFont
+from PIL import Image,ImageDraw,ImageFont,ImageChops
 import traceback
 import datetime
 import requests
+import logging
 
 fontTempSize = ImageFont.truetype(rootPath + '/lib/Font.ttc', 30)
 fontWeekSize = ImageFont.truetype(rootPath + '/lib/Font.ttc', 60)
@@ -35,11 +36,23 @@ weatherIconToday = ""
 weatherIconTomorrow = ""
 tempArray = ["------"]*13
 
+def getTime():
+    return(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())+"   ")
+
 #获取天气
-def getTemp():
+def getTemp():                                                                     # 连接超时,6秒，下载文件超时,7秒
+    r = requests.get('http://t.weather.sojson.com/api/weather/city/101280701',timeout=(6,7)) 
+    r.encoding = 'utf-8'
+    print(getTime()+'状态码: '+str(r.status_code), flush=True)
+    if r.status_code == 200:
+        print(getTime()+'服务器正常!', flush=True)
+    elif r.status_code == 404:
+        print(getTime()+'网页不存在!', flush=True)
+        return
+    elif r.status_code == 500:
+        print(getTime()+'服务器错误!', flush=True)
+        return
     try:
-        r = requests.get('http://t.weather.sojson.com/api/weather/city/101010100') 
-        r.encoding = 'utf-8'
         tempList = [
         (r.json()['cityInfo']['city']),             #城市
         (r.json()['data']['forecast'][0]['low']),   #最低温度
@@ -57,8 +70,10 @@ def getTemp():
         ]
     except:
         tempList = ["------"]*13
+        print(getTime()+'获取天气数据失败...', flush=True)
         return tempList
     else:
+        print(getTime()+'获取天气数据成功...', flush=True)
         return tempList
 
 def UpdateWeatherText(tempArray,TodayTomorrow):
@@ -124,7 +139,7 @@ def alignCenter(string,scale,startPixel):
 
 #刷新循环
 while (True):
-    print("start...")
+    print(getTime()+'start...', flush=True)
     epd = epd7in5.EPD()
     epd.init()
 
@@ -144,6 +159,7 @@ while (True):
         countUpdate_4 = True
         tempArray = UpdateData()
         epd.Clear()
+        print(getTime()+'重置更新天气', flush=True)
 
     Himage = Image.new('1', (epd.width, epd.height), 255)  # 255: clear the frame
     draw = ImageDraw.Draw(Himage)
@@ -152,7 +168,7 @@ while (True):
     #显示时间   
     draw.text((430, 0), strtime2, font = fontTimeSize, fill = 0)
     #显示年月日
-    draw.text((410, 335), strtime, font = fontDateSize, fill = 0)
+    draw.text((410, 330), strtime, font = fontDateSize, fill = 0)
     #显示图标
     bmp = Image.open(rootPath + '/pic/icon.png')
     Himage.paste(bmp,(15,80))
@@ -160,22 +176,26 @@ while (True):
     # 天气API 只有这几个点会更新,减少无用请求
     intTime = int(strtime5)
 
-    if(countUpdate_1 and intTime == 7):
+    if(countUpdate_1 and  intTime == 7):
         tempArray = UpdateData()
         countUpdate_1 = False
         epd.Clear()
+        print(getTime()+strtime2 + '更新天气', flush=True)
     elif(countUpdate_2 and intTime == 11):
         tempArray = UpdateData()
         countUpdate_2 = False
         epd.Clear()
+        print(getTime()+strtime2 + '更新天气', flush=True)
     elif(countUpdate_3 and intTime == 16):
         tempArray = UpdateData()
         countUpdate_3 = False
         epd.Clear()
-    elif(countUpdate_4 and intTime == 21):
+        print(getTime()+strtime2 + '更新天气', flush=True)
+    elif(countUpdate_4 and intTime == 21 ):
         tempArray = UpdateData()
         countUpdate_4 = False
         epd.Clear()
+        print(getTime()+strtime2 + '更新天气', flush=True)
         
 
     #显示城市/更新时间
@@ -189,7 +209,7 @@ while (True):
     temp_H = tempArray[2].replace("高温","")
     temp_H = temp_H.replace("℃","")
     temp_H = temp_H.replace(" ","")
-    draw.text((70,90), temp_L+"~"+temp_H+"度", font = fontTempSize, fill = 0)  
+    draw.text((70,90),"温度: "+ temp_L+"~"+temp_H, font = fontTempSize, fill = 0)  
     
     #显示湿度
     draw.text((70,133),"湿度: "+ tempArray[3], font = fontTempSize, fill = 0)
@@ -220,14 +240,17 @@ while (True):
         SwitchDay = True
 
     #画竖线(x开始值，y开始值，x结束值，y结束值)
-    draw.rectangle((330, 90, 331, 290), fill = 0)
+    draw.rectangle((325, 90, 326, 290), fill = 0)
     #画横线
     draw.rectangle((0, 315, 680, 317), fill = 0)
     #刷新屏幕
+    print(getTime()+strtime2 + '刷新屏幕...', flush=True)
+    Himage = ImageChops.invert(Himage)
     epd.display(epd.getbuffer(Himage))
     #屏幕休眠
     epd.sleep()
-    if(intTime >= 1 and intTime <= 6): #1点～6点 每小时刷新一次
+    print(getTime()+strtime2 + '屏幕休眠...', flush=True)
+    if(intTime >= 1 and intTime <= 6): #2点～6点 每小时刷新一次
         time.sleep(3600)
     else:
-        time.sleep(360)
+        time.sleep(600)
