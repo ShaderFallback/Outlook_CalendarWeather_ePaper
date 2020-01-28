@@ -1,5 +1,6 @@
 ## 墨水屏天气站 WeatherStation by RaspberryPi
-![image](https://github.com/ShaderFallback/RaspberryPi-WeatherStation/blob/master/Demo.jpg)
+![image](https://github.com/ShaderFallback/RaspberryPi-WeatherStation/blob/master/photo/demo1.jpg)
+![image](https://github.com/ShaderFallback/RaspberryPi-WeatherStation/blob/master/photo/demo2.jpg)
 
 ### 硬件清单
 - **树莓派 ZeroW** 
@@ -32,11 +33,25 @@ su pi -c "exec /home/pi/WeatherStation/startWeather.sh"
 ``` 
 - **重启树莓派 sudo reboot**
 
+### 3D打印外壳
+- **图片中模型使用FDM 打印机，北方冬天请适当提升PLA喷嘴温度，防止挤出困难**
+- **模型制作的单位为厘米CM(在Cura中缩放为10) 请注意打印尺寸**
+- **模型分为两种厚度版，1.9CM厚/2.5CM厚 两个版本，驱动板直插的话需要使用2.5CM 厚的版本(内部细节请看photo中图片)**
+- **Model文件夹中已包含maya(2014及以上)模型源文件,如有特殊需求请自行修改**
+- **底座有Logo 版和无Logo版 可自行选择**
+
+![image](https://github.com/ShaderFallback/RaspberryPi-WeatherStation/blob/master/photo/demo3.jpg)
+
+- **打印参数参考**
+![image](https://github.com/ShaderFallback/RaspberryPi-WeatherStation/blob/master/photo/Pla1.png)
+![image](https://github.com/ShaderFallback/RaspberryPi-WeatherStation/blob/master/photo/Pla2.png)
+![image](https://github.com/ShaderFallback/RaspberryPi-WeatherStation/blob/master/photo/Pla3.png)
+![image](https://github.com/ShaderFallback/RaspberryPi-WeatherStation/blob/master/photo/Pla4.png)
+
 ### 其他
 - **目录中包含PSD文件 方便参考改变布局，
 PS 显示标尺  视图 > 标尺 ，在标尺上右键切换单位为 “像素” 
 拉出参考线时就可以很容易确定 坐标位置**
 
-- **图片时彩色时将会被驱动自动转换，灰阶会以抖动（dithering）方式显示**
 
 - **有任何问题欢迎给我留言 :)**
