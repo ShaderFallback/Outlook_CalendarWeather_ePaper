@@ -65,10 +65,10 @@ class EPD:
         epdconfig.digital_write(self.cs_pin, 1)
         
     def ReadBusy(self):
-        print("e-Paper busy")
+        #print("e-Paper busy")
         while(epdconfig.digital_read(self.busy_pin) == 0):      # 0: idle, 1: busy
             epdconfig.delay_ms(100)    
-        print("e-Paper busy release")
+        #print("e-Paper busy release")
         
     def init(self):
         if (epdconfig.module_init() != 0):
@@ -124,7 +124,7 @@ class EPD:
         image_monocolor = image.convert('1')
         imwidth, imheight = image_monocolor.size
         pixels = image_monocolor.load()
-        print("imwidth = ", imwidth, "imheight = ", imheight)
+        #print("imwidth = ", imwidth, "imheight = ", imheight)
         if(imwidth == self.width and imheight == self.height):
             for y in range(imheight):
                 for x in range(imwidth):
@@ -195,6 +195,7 @@ class EPD:
         self.send_command(0x07) # DEEP_SLEEP
         self.send_data(0XA5)
         
-        #epdconfig.module_exit()
+        epdconfig.delay_ms(2000)
+        epdconfig.module_exit()
 ### END OF FILE ###
 
