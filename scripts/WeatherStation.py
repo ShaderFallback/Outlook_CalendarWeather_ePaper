@@ -40,7 +40,7 @@ def getTime():
 #获取天气
 def getTemp():
     try:                                                        # 连接超时,6秒，下载文件超时,7秒
-        r = requests.get('http://t.weather.itboy.net/api/weather/city/101280701',timeout=(6,7)) 
+        r = requests.get('http://t.weather.itboy.net/api/weather/city/101010100',timeout=(6,7)) 
         r.encoding = 'utf-8'
         print(getTime()+'Print Status Code: '+str(r.status_code), flush=True)
         if r.status_code == 200:
