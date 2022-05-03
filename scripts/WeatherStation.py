@@ -18,10 +18,10 @@ import datetime
 import requests
 import logging
 
-fontTempSize = ImageFont.truetype(rootPath + '/lib/三极信黑简体.ttf', 30)
-fontWeekSize = ImageFont.truetype(rootPath + '/lib/三极信黑简体.ttf', 60)
-fontDateSize = ImageFont.truetype(rootPath + '/lib/三极信黑简体.ttf', 40)
-fontTimeSize = ImageFont.truetype(rootPath + '/lib/三极信黑简体.ttf', 70)
+fontTempSize = ImageFont.truetype(rootPath + '/lib/字体.ttf', 30)
+fontWeekSize = ImageFont.truetype(rootPath + '/lib/字体.ttf', 60)
+fontDateSize = ImageFont.truetype(rootPath + '/lib/字体.ttf', 40)
+fontTimeSize = ImageFont.truetype(rootPath + '/lib/字体.ttf', 70)
 oilStrTime = ""
 weekStr = ""
 oilStrWeek = ""
@@ -39,7 +39,7 @@ def getTime():
 
 #获取天气
 def getTemp():
-    try:                                                                     # 连接超时,6秒，下载文件超时,7秒
+    try:                                                        # 连接超时,6秒，下载文件超时,7秒
         r = requests.get('http://t.weather.itboy.net/api/weather/city/101280701',timeout=(6,7)) 
         r.encoding = 'utf-8'
         print(getTime()+'Print Status Code: '+str(r.status_code), flush=True)
@@ -250,7 +250,7 @@ while (True):
     
 
     #画竖线(x开始值，y开始值，x结束值，y结束值)
-    draw.rectangle((270, 90, 270, 290), fill = 0)
+    draw.rectangle((280, 90, 280, 290), fill = 0)
     #画横线
     draw.rectangle((0, 315, 680, 317), fill = 0)
     #刷新屏幕
