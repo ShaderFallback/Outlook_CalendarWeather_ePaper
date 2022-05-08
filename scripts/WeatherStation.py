@@ -1,10 +1,8 @@
-#!/usr/bin/python
-# -*- coding:utf-8 -*-
-
+#=================BiliBili日出东水===================
+#                   墨水屏天气台历
+#----------------------------------------------------
 import sys
 import os
-# sys.path.append(r'../lib')
-
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath + "/lib")
@@ -17,11 +15,16 @@ import traceback
 import datetime
 import requests
 import logging
+from O365 import Account
+from collections import OrderedDict
 
-fontTempSize = ImageFont.truetype(rootPath + '/lib/字体.ttf', 30)
-fontWeekSize = ImageFont.truetype(rootPath + '/lib/字体.ttf', 60)
-fontDateSize = ImageFont.truetype(rootPath + '/lib/字体.ttf', 40)
-fontTimeSize = ImageFont.truetype(rootPath + '/lib/字体.ttf', 70)
+fontSize16 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 16)
+fontSize20 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 20)
+fontSize25 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 25)
+fontSize30 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 30)
+fontSize50 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 50)
+fontSize70 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 70)
+
 oilStrTime = ""
 weekStr = ""
 oilStrWeek = ""
@@ -30,65 +33,91 @@ countUpdate_2 = False
 countUpdate_3 = False
 countUpdate_4 = False
 SwitchDay = True
-weatherIconToday = ""
-weatherIconTomorrow = ""
-tempArray = ["---"]*18
+tempArray = ["---"]*23
 
-def getTime():
+def GetO365(maxCount):
+                    #这里填写客户端ID                       #API权限中的值(第一次生成时才能看到)
+    credentials = ('2233eca8-107c-4e33-82av-e7btcd87010n', 'B2-7Q~lqfJBLFXnJNh3qCJWusaRXAMzAcal.e')
+    account = Account(credentials)
+    schedule = account.schedule()
+    #查询从今天开始一个月内的日历
+    #也可以指定 datetime(2022, 5, 30)
+    now_time = datetime.datetime.now()
+    end_time = datetime.timedelta(days =30)
+    range_time = (now_time + end_time).strftime('%Y-%m-%d')
+
+    q = schedule.new_query('start').greater_equal(now_time)
+    q.chain('and').on_attribute('end').less_equal(range_time)
+
+    getSchedule = schedule.get_events(query=q, include_recurring=True) 
+    
+    scheduleDic = OrderedDict()
+    scheduleCount = 0
+    for event in getSchedule:
+        #获取位置
+        locationStr = str(event.location).split(",")[0].split(":")[1].replace("'","").replace(" ","")
+        #获取时间
+        dateTime = event.start
+        #获取标题
+        subjectStr = event.subject
+        #获取正文
+        bodyStr = str(event.body)
+        startIndex = bodyStr.find("body")
+        endIndex = bodyStr.find("/body")
+        bodyProcessStr = bodyStr[startIndex+6:endIndex-1].replace("\n","")
+
+        elemDic = OrderedDict()
+        elemDic["location"] = locationStr
+        elemDic["dateTime"] = dateTime
+        elemDic["subjectStr"] = subjectStr
+        elemDic["bodyStr"] = bodyProcessStr
+        scheduleDic[scheduleCount] = elemDic
+        scheduleCount+=1
+        if scheduleCount >=maxCount:
+            break
+    return scheduleDic
+
+def GetTime():
     return(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())+"   ")
-
 #获取天气
-def getTemp():
-    try:                                                        # 连接超时,6秒，下载文件超时,7秒
-        r = requests.get('http://t.weather.itboy.net/api/weather/city/101010100',timeout=(6,7)) 
+def GetTemp():
+    try:                                                                     # 连接超时,6秒，下载文件超时,7秒
+        r = requests.get('http://t.weather.itboy.net/api/weather/city/101280701',timeout=(6,7)) 
         r.encoding = 'utf-8'
-        print(getTime()+'Print Status Code: '+str(r.status_code), flush=True)
-        if r.status_code == 200:
-            print(getTime()+'Server Ok!', flush=True)
-        elif r.status_code == 404:
-            print(getTime()+'Html 404!', flush=True)
-            return
-        elif r.status_code == 500:
-            print(getTime()+'Sever Error!', flush=True)
-            return
-
         tempList = [
-        (r.json()['cityInfo']['city']),             #城市
-        (r.json()['data']['forecast'][0]['low']),   #最低温度
-        (r.json()['data']['forecast'][0]['high']),  #最高温度
-        (r.json()['data']['shidu']),                #湿度
-        str(r.json()['data']['pm25']),              #Pm2.5
-        (r.json()['data']['forecast'][0]['fx']),    #风向
-        (r.json()['data']['forecast'][0]['fl']),    #风力
-        (r.json()['data']['quality']),              #空气质量
-        (r.json()['cityInfo']['updateTime']),       #更新时间
-        (r.json()['data']['forecast'][0]['type']),  #今日天气
-        (r.json()['data']['forecast'][0]['low']),   #今日最低
-        (r.json()['data']['forecast'][0]['high']),  #今日最高
-        (r.json()['data']['forecast'][0]['fx']),       #12
-        (r.json()['data']['forecast'][0]['fl']),       #13
-        (r.json()['data']['forecast'][1]['type']),  #明日最低
-        (r.json()['data']['forecast'][1]['low']),   #明日最低
-        (r.json()['data']['forecast'][1]['high']),   #明日最高
-        (r.json()['data']['forecast'][1]['fx']),
-        (r.json()['data']['forecast'][1]['fl'])
+        (r.json()['cityInfo']['city']),             #城市0
+        (r.json()['data']['shidu']),                #湿度1
+        (r.json()['data']['forecast'][0]['low']),   #今日低温2
+        (r.json()['data']['forecast'][0]['high']),  #今日高温3
+        (r.json()['data']['forecast'][0]['type']),  #今日天气4
+        (r.json()['data']['forecast'][0]['fx']),    #今日风向5
+        (r.json()['data']['forecast'][0]['fl']),    #今日风级6
+
+        (r.json()['data']['forecast'][1]['low']),   #明日低温7
+        (r.json()['data']['forecast'][1]['high']),  #明日高温8
+        (r.json()['data']['forecast'][1]['type']),  #明日天气9
+        (r.json()['data']['forecast'][1]['fx']),    #明日风向10
+        (r.json()['data']['forecast'][1]['fl']),    #明日风级11
+
+        (r.json()['data']['forecast'][2]['low']),   #后日低温12
+        (r.json()['data']['forecast'][2]['high']),  #后日高温13
+        (r.json()['data']['forecast'][2]['type']),  #后日天气14
+        (r.json()['data']['forecast'][2]['fx']),    #后日风向15
+        (r.json()['data']['forecast'][2]['fl']),    #后日风级16
+
+        (r.json()['data']['forecast'][3]['low']),   #大后日低温17
+        (r.json()['data']['forecast'][3]['high']),  #大后日高温18
+        (r.json()['data']['forecast'][3]['type']),  #大后日天气19
+        (r.json()['data']['forecast'][3]['fx']),    #大后日风向20
+        (r.json()['data']['forecast'][3]['fl']),    #大后日风级21
+
+        (r.json()['cityInfo']['updateTime'])        #更新时间22
         ]
     except:
-        tempList = ["--"]*19
-        print(getTime()+'Get Weather Data Fail...', flush=True)
+        tempList = ["---"]*23
         return tempList
     else:
-        print(getTime()+'Get Weather Data Success...', flush=True)
         return tempList
-
-def UpdateWeatherText(tempArray,TodayTomorrow):
-    TextTemp = tempArray[TodayTomorrow].split('，') #使用逗号分隔字符串，分两行显示
-    if(len(TextTemp)<2):                            #如果是整句话没有逗号，正数第五个字强制分隔防止出屏幕
-        strtemp = tempArray[TodayTomorrow]
-        TextTemp = [""]*2
-        TextTemp[0] = strtemp[0:5]
-        TextTemp[1] = strtemp[5:]
-    return TextTemp
 
 def UpdateWeatherIcon(tempType):  #匹配天气类型图标
     if(tempType == "大雨"  or tempType == "中到大雨"):
@@ -104,8 +133,8 @@ def UpdateWeatherIcon(tempType):  #匹配天气类型图标
     elif(tempType == "--"):
         return "无天气类型.bmp"
     return (tempType + ".bmp")
-        
-def todayWeek(nowWeek):
+
+def TodayWeek(nowWeek):
     if nowWeek == "0":
         return"星期天"
     elif nowWeek =="1":
@@ -122,50 +151,22 @@ def todayWeek(nowWeek):
         return"星期六"
 
 def UpdateData():
-    tempArray = getTemp()
-    global weatherIconToday
-    global weatherIconTomorrow
-    weatherIconToday = UpdateWeatherIcon(tempArray[9])
-    weatherIconTomorrow = UpdateWeatherIcon(tempArray[14])
+    global tempArray
+    tempArray = GetTemp()
     return tempArray
 
-def replaceLowTemp(lowTemp):
-    temp_L = lowTemp.replace("低温","")
-    temp_L = temp_L.replace("℃","")
-    temp_L = temp_L.replace(" ","")
-    return temp_L
-
-def replaceHeightTemp(heighTemp):
-    temp_H = heighTemp.replace("高温","")
-    temp_H = temp_H.replace("℃","")
-    temp_H = temp_H.replace(" ","")
-    return temp_H
-
-#348 - 640 像素 居中显示
-#居中显示的方法 一个字宽度30像素 例如重479像素开始 多加一个字 少空 15 个像素
-def alignCenter(string,scale,startPixel):
-    charsCount = 0
-    for s in string:
-        charsCount += 1
-    charsCount *= scale/2
-    charsCount = startPixel - charsCount
-    return charsCount
-UpdateData()
-#刷新循环
-while (True):
-    print(getTime()+'Epd7in5 Init...', flush=True)
-    epd = epd7in5.EPD()
-    epd.init()
-
-    timeUpdate = datetime.datetime.now()
-    strtime = timeUpdate.strftime('%Y-%m-%d') #年月日
+def UpdateTemp(timeUpdate):
+    global oilStrWeek
+    global tempArray
+    global countUpdate_1
+    global countUpdate_2
+    global countUpdate_3
+    global countUpdate_4
     strtime2 = timeUpdate.strftime('%H:%M')   #时间
-    strtime3 = timeUpdate.strftime('%M')      #分钟
     strtime4 = timeUpdate.strftime('%w')      #星期
     strtime5 = timeUpdate.strftime('%H')      #小时
     
     if(strtime4 != oilStrWeek):  #每天重置更新天气
-        weekStr = todayWeek(strtime4)
         oilStrWeek = strtime4
         countUpdate_1 = True
         countUpdate_2 = True
@@ -173,20 +174,7 @@ while (True):
         countUpdate_4 = True
         tempArray = UpdateData()
         epd.Clear()
-        print(getTime()+'Reset Update..', flush=True)
-
-    Himage = Image.new('1', (epd.width, epd.height), 255)  # 255: clear the frame
-    draw = ImageDraw.Draw(Himage)
-    #显示星期
-    draw.text((20, 6), weekStr, font = fontWeekSize, fill = 0)
-
-    #显示时间   
-    draw.text((430, 0), strtime2, font = fontTimeSize, fill = 0)
-    #显示年月日
-    draw.text((400, 330), strtime, font = fontDateSize, fill = 0)
-    #显示图标
-    bmp = Image.open(rootPath + '/pic/icon.png')
-    Himage.paste(bmp,(15,80))
+        print(GetTime()+'Reset Update..', flush=True)
 
     # 天气API 只有这几个点会更新,减少无用请求
     intTime = int(strtime5)
@@ -194,73 +182,178 @@ while (True):
     if(countUpdate_1 and  intTime == 7):
         tempArray = UpdateData()
         countUpdate_1 = False
-        #epd.Clear()
-        print(getTime()+strtime2 + ' UpdateWeather', flush=True)
+        print(GetTime()+strtime2 + ' UpdateWeather', flush=True)
     elif(countUpdate_2 and intTime == 11):
         tempArray = UpdateData()
         countUpdate_2 = False
-        #epd.Clear()
-        print(getTime()+strtime2 + ' UpdateWeather', flush=True)
+        print(GetTime()+strtime2 + ' UpdateWeather', flush=True)
     elif(countUpdate_3 and intTime == 16):
         tempArray = UpdateData()
         countUpdate_3 = False
-        #epd.Clear()
-        print(getTime()+strtime2 + ' UpdateWeather', flush=True)
+        print(GetTime()+strtime2 + ' UpdateWeather', flush=True)
     elif(countUpdate_4 and intTime == 21 ):
         tempArray = UpdateData()
         countUpdate_4 = False
-        #epd.Clear()
-        print(getTime()+strtime2 + ' UpdateWeather', flush=True)
-        
+        print(GetTime()+strtime2 + ' UpdateWeather', flush=True)
 
-    #显示城市/更新时间
-    draw.text((15, 335), tempArray[0], font = fontTempSize, fill = 0)
-    draw.text((110, 335), tempArray[8] + "更新", font = fontTempSize, fill = 0)
+def ReplaceLowTemp(lowTemp):
+    temp_L = lowTemp.replace("低温","")
+    temp_L = temp_L.replace("℃","")
+    temp_L = temp_L.replace(" ","")
+    return temp_L
 
-    #显示温度 (自带的字库不能显示℃ ,更换字体文件可解决)
-    draw.text((70,89),"温度: "+ replaceLowTemp(tempArray[1])+"-"+replaceHeightTemp(tempArray[2]), font = fontTempSize, fill = 0)  
-    
+def ReplaceHeightTemp(heighTemp):
+    temp_H = heighTemp.replace("高温","")
+    temp_H = temp_H.replace("℃","")
+    temp_H = temp_H.replace(" ","")
+    return temp_H
+
+#348 - 640 像素 居中显示
+#居中显示的方法 一个字宽度30像素 例如重479像素开始 多加一个字 少空 15 个像素
+def AlignCenter(string,scale,startPixel):
+    charsCount = 0
+    for s in string:
+        charsCount += 1
+    charsCount *= scale/2
+    charsCount = startPixel - charsCount
+    return charsCount
+
+def StrLenCur(text):
+    strLen = len(text)
+    if(strLen > 12):
+        return text[0:12]+"..."
+    else:
+        return text
+
+def DrawHorizontalDar(draw,Himage,timeUpdate):
+    strtime = timeUpdate.strftime('%Y-%m-%d') #年月日
+    strtime2 = timeUpdate.strftime('%H:%M')   #时间
+    strtimeW = timeUpdate.strftime('%w') #星期
+
+    #显示星期
+    draw.text((20, 15), TodayWeek(strtimeW), font = fontSize30, fill = 0)
+    #显示时间   
+    draw.text((128, 8), strtime2, font = fontSize50, fill = 0)
+    #显示年月日
+    draw.text((20, 55), strtime, font = fontSize16, fill = 0)
+    #显示城市
+    #draw.text((220, 55), tempArray[0], font = fontSize16, fill = 0)
+    #天气图标
+    tempTypeIcon = Image.open(rootPath + "/pic/weatherType/" + UpdateWeatherIcon(tempArray[4]))
+    Himage.paste(tempTypeIcon,(280,18))
+    #今日天气
+    draw.text((330,18),tempArray[4], font = fontSize25, fill = 0)
+    #温度
+    todayTemp = ReplaceLowTemp(tempArray[2])+"-"+ReplaceHeightTemp(tempArray[3]) +" 度"
+    draw.text((450,55),todayTemp, font = fontSize16, fill = 0)
+    #温度图标
+    TempIcon = Image.open(rootPath + "/pic/temp.png")
+    Himage.paste(TempIcon,(450,15))
     #显示湿度
-    draw.text((70,133),"湿度: "+ tempArray[3], font = fontTempSize, fill = 0)
-    #显示PM2.5
-    draw.text((70,177),"PM2.5: "+ tempArray[4], font = fontTempSize, fill = 0)
-    #显示风向
-    draw.text((70,221), tempArray[5] +" "+ tempArray[6], font = fontTempSize, fill = 0)
-    #空气质量
-    draw.text((70,265),"空气质量: "+ tempArray[7], font = fontTempSize, fill = 0)
-    
+    draw.text((545,55),"湿度: "+ tempArray[1], font = fontSize16, fill = 0)
+    #湿度图标
+    tmoistureIcon = Image.open(rootPath + "/pic/moisture.png")
+    Himage.paste(tmoistureIcon,(545,15))
+    #风力
+    windTemp = tempArray[5] + tempArray[6]
+    draw.text((330,55),windTemp, font = fontSize16, fill = 0)
 
-    tempTypeIcon = Image.open(rootPath + "/pic/weatherType/" + weatherIconToday)
-    Himage.paste(tempTypeIcon,(340,90))
-    draw.text((alignCenter(tempArray[9],30,370),177),tempArray[9], font = fontTempSize, fill = 0)
-    todayTemp = replaceLowTemp(tempArray[10])+"-"+replaceHeightTemp(tempArray[11]) +" 度"
-    draw.text((alignCenter("空四个字",30,370),225),todayTemp, font = fontTempSize, fill = 0)
-    windTemp = tempArray[12] + tempArray[13]
-    draw.text((alignCenter(windTemp,30,370),266),windTemp, font = fontTempSize, fill = 0)
+def DrawSchedule(draw,timeUpdate):
+    scheduleDic = GetO365(6)
+    for x in range(0,len(scheduleDic)):
+        t = scheduleDic[x]["dateTime"]
+        subjectStr = scheduleDic[x]["subjectStr"]
+        bodyStr = scheduleDic[x]["bodyStr"]
+        #黑方框标记今日
+        fillColor = 0
+        if(int(t.day) == int(timeUpdate.strftime('%d'))):
+            draw.rectangle((15, 95 + x*50, 75, 135 + x*50), fill = "black")
+            fillColor = 255
+        draw.text((20,100 + x*50),str(t.month) +"月"+ str(t.day)+"日", font = fontSize16, fill = fillColor)
+        draw.text((20,115 + x*50),str(t.strftime('%H:%M')), font = fontSize16, fill = fillColor)
+        #日程标题
+        draw.text((90,95 + x*50),StrLenCur(str(subjectStr)), font = fontSize25, fill = 0)
+        #draw.text((15,80 + x*100),bodyStr, font = fontSize16, fill = 0)
+        
+def WeatherStrSwitch(index):
+    if index == 0:
+        return"明天"
+    elif index == 1:
+        return"后天"
+    elif index == 2:
+        return"大后天"
 
+def WeatherSwitch(index):
+    if index == 0:
+        return 4
+    elif index == 1:
+        return 9
+    elif index == 2:
+        return 14
 
-    tempTypeIcon2 = Image.open(rootPath + "/pic/weatherType/" + weatherIconTomorrow)
-    Himage.paste(tempTypeIcon2,(500,90))
-    draw.text((alignCenter(tempArray[14],30,540),177),tempArray[14], font = fontTempSize, fill = 0)
-    todayTemp2 = replaceLowTemp(tempArray[15])+"-"+replaceHeightTemp(tempArray[16]) +" 度"
-    draw.text((alignCenter("空四个字",30,540),225),todayTemp2, font = fontTempSize, fill = 0)
-    windTemp2 = tempArray[17] + tempArray[18]
-    draw.text((alignCenter(windTemp2,30,540),266),windTemp2, font = fontTempSize, fill = 0)
+def DrawWeather(draw):
+    for x in range(0,3):
+        draw.text((430,90 + x *100),WeatherStrSwitch(x), font = fontSize16, fill = 0)
+        strWeather = tempArray[WeatherSwitch(x)]
+        #图标
+        pathIcon = UpdateWeatherIcon(strWeather)
+        tempTypeIcon = Image.open(rootPath + "/pic/weatherType/" + pathIcon)
+        Himage.paste(tempTypeIcon,(454,112 + x*100))
+        #天气
+        draw.text((510,120 + x *100),strWeather, font = fontSize20, fill = 0)
+        #温度
+        forecastTemp = ReplaceLowTemp(tempArray[WeatherSwitch(x)-2])+"-"+ReplaceHeightTemp(tempArray[WeatherSwitch(x)-1]) +" 度"
+        draw.text((500,145 + x *100),forecastTemp, font = fontSize20, fill = 0)
+        #风力
+        windTemp = tempArray[WeatherSwitch(x)+1] + tempArray[WeatherSwitch(x)+2]
+        draw.text((555,90 + x *100),windTemp, font = fontSize16, fill = 0)
 
-    
+UpdateData()
 
-    #画竖线(x开始值，y开始值，x结束值，y结束值)
-    draw.rectangle((280, 90, 280, 290), fill = 0)
-    #画横线
-    draw.rectangle((0, 315, 680, 317), fill = 0)
+#刷新循环
+while (True):
+    print(GetTime()+'Epd7in5 Init...', flush=True)
+    epd = epd7in5.EPD()
+    epd.init()
+
+    timeUpdate = datetime.datetime.now()
+
+    #更新天气
+    UpdateTemp(timeUpdate)
+    #时间
+    strtime2 = timeUpdate.strftime('%H:%M')
+    #小时
+    strtime5 = timeUpdate.strftime('%H')      
+    intTime = int(strtime5)
+    #新建空白图片
+    Himage = Image.new('1', (epd.width, epd.height), 128)
+    draw = ImageDraw.Draw(Himage)
+
+    #显示背景
+    bmp = Image.open(rootPath + '/pic/bg.png')
+    Himage.paste(bmp,(0,0))
+
+    #绘制水平栏
+    DrawHorizontalDar(draw,Himage,timeUpdate)
+
+    #绘制日程
+    DrawSchedule(draw,timeUpdate)
+
+    #绘制天气预报
+    DrawWeather(draw)
+
+    #画线(x开始值，y开始值，x结束值，y结束值)
+    #draw.rectangle((280, 90, 280, 290), fill = 0)
+
     #刷新屏幕
-    print(getTime()+strtime2 + ' Update Screen...', flush=True)
+    print(GetTime()+strtime2 + ' Update Screen...', flush=True)
+    #反向图片
     #Himage = ImageChops.invert(Himage)
     epd.display(epd.getbuffer(Himage))
     #屏幕休眠
-    print(getTime()+strtime2 + ' Screen Sleep...', flush=True)
+    print(GetTime()+strtime2 + ' Screen Sleep...', flush=True)
     epd.sleep()
-    print(getTime()+strtime2 + ' Time.sleep...', flush=True)
+    print(GetTime()+strtime2 + ' Time.sleep...', flush=True)
     if(intTime >= 1 and intTime <= 6): #2点～6点 每小时刷新一次
         time.sleep(3600)
     else:
