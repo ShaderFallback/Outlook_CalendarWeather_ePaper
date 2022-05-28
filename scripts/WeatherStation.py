@@ -227,9 +227,9 @@ def StrLenCur(text):
     letterLen = len("".join(re.findall(r'[A-Za-z]',text)))
     sumLen = (numberLen + letterLen)
     characterLen =  allStrLen - sumLen
-    calculateLen = characterLen + int(sumLen/2)
-    tempLen = (int)(sumLen/2) + 12
-    if(calculateLen > 12):
+    calculateLen = characterLen + int(sumLen/3)
+    tempLen = (int)(sumLen/3) + 12
+    if(calculateLen >= 12):
         return text[0:tempLen]+"..."
     else:
         return text
