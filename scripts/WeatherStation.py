@@ -17,6 +17,7 @@ import requests
 import logging
 from O365 import Account
 from collections import OrderedDict
+import re
 
 fontSize16 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 16)
 fontSize20 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 20)
@@ -36,8 +37,8 @@ SwitchDay = True
 tempArray = ["---"]*23
 
 def GetO365(maxCount):
-                    #这里填写客户端ID                       #API权限中的值(第一次生成时才能看到)
-    credentials = ('2233eca8-107c-4e33-82av-e7btcd87010n', 'B2-7Q~lqfJBLFXnJNh3qCJWusaRXAMzAcal.e')
+                    #这里填写客户端ID                       #API权限中的密码(第一次生成时才能看到)
+    credentials = ('44322eca5-007c-4e3358cta-e8bicd8g010d', 'W3-7Q~lqRJBLGXnJGy3qCJfusaRXAyzwcaH.o')
     account = Account(credentials)
     schedule = account.schedule()
     #查询从今天开始一个月内的日历
@@ -182,19 +183,19 @@ def UpdateTemp(timeUpdate):
     if(countUpdate_1 and  intTime == 7):
         tempArray = UpdateData()
         countUpdate_1 = False
-        print(GetTime()+strtime2 + ' UpdateWeather', flush=True)
+        print(GetTime() + 'UpdateWeather', flush=True)
     elif(countUpdate_2 and intTime == 11):
         tempArray = UpdateData()
         countUpdate_2 = False
-        print(GetTime()+strtime2 + ' UpdateWeather', flush=True)
+        print(GetTime() + 'UpdateWeather', flush=True)
     elif(countUpdate_3 and intTime == 16):
         tempArray = UpdateData()
         countUpdate_3 = False
-        print(GetTime()+strtime2 + ' UpdateWeather', flush=True)
+        print(GetTime() + 'UpdateWeather', flush=True)
     elif(countUpdate_4 and intTime == 21 ):
         tempArray = UpdateData()
         countUpdate_4 = False
-        print(GetTime()+strtime2 + ' UpdateWeather', flush=True)
+        print(GetTime() + 'UpdateWeather', flush=True)
 
 def ReplaceLowTemp(lowTemp):
     temp_L = lowTemp.replace("低温","")
@@ -219,9 +220,17 @@ def AlignCenter(string,scale,startPixel):
     return charsCount
 
 def StrLenCur(text):
-    strLen = len(text)
-    if(strLen > 12):
-        return text[0:12]+"..."
+    #字母和数字占位与汉字间距不同 
+    #2个约等于一个汉字,当包含数字或字母时放宽显示数量
+    allStrLen = len(text)
+    numberLen = len("".join([x for x in text if x.isdigit()]))
+    letterLen = len("".join(re.findall(r'[A-Za-z]',text)))
+    sumLen = (numberLen + letterLen)
+    characterLen =  allStrLen - sumLen
+    calculateLen = characterLen + int(sumLen/2)
+    tempLen = (int)(sumLen/2) + 12
+    if(calculateLen > 12):
+        return text[0:tempLen]+"..."
     else:
         return text
 
@@ -259,6 +268,7 @@ def DrawHorizontalDar(draw,Himage,timeUpdate):
     draw.text((330,55),windTemp, font = fontSize16, fill = 0)
 
 def DrawSchedule(draw,timeUpdate):
+    print(GetTime()+'Get Schedule Date...', flush=True)
     scheduleDic = GetO365(6)
     for x in range(0,len(scheduleDic)):
         t = scheduleDic[x]["dateTime"]
@@ -267,14 +277,15 @@ def DrawSchedule(draw,timeUpdate):
         #黑方框标记今日
         fillColor = 0
         if(int(t.day) == int(timeUpdate.strftime('%d'))):
-            draw.rectangle((15, 95 + x*50, 75, 135 + x*50), fill = "black")
+            draw.rectangle((5, 95 + x*50, 80, 135 + x*50), fill = "black")
             fillColor = 255
-        draw.text((20,100 + x*50),str(t.month) +"月"+ str(t.day)+"日", font = fontSize16, fill = fillColor)
-        draw.text((20,115 + x*50),str(t.strftime('%H:%M')), font = fontSize16, fill = fillColor)
+        draw.text((10,100 + x*50),str(t.month) +"月"+ str(t.day)+"日", font = fontSize16, fill = fillColor)
+        draw.text((10,115 + x*50),str(t.strftime('%H:%M')), font = fontSize16, fill = fillColor)
         #日程标题
         draw.text((90,95 + x*50),StrLenCur(str(subjectStr)), font = fontSize25, fill = 0)
         #draw.text((15,80 + x*100),bodyStr, font = fontSize16, fill = 0)
-        
+    print(GetTime()+'Schedule Done!', flush=True)
+
 def WeatherStrSwitch(index):
     if index == 0:
         return"明天"
@@ -317,9 +328,10 @@ while (True):
     epd.init()
 
     timeUpdate = datetime.datetime.now()
-
+    
     #更新天气
     UpdateTemp(timeUpdate)
+    print(GetTime()+'Weather Update Done !', flush=True)
     #时间
     strtime2 = timeUpdate.strftime('%H:%M')
     #小时
@@ -346,14 +358,15 @@ while (True):
     #draw.rectangle((280, 90, 280, 290), fill = 0)
 
     #刷新屏幕
-    print(GetTime()+strtime2 + ' Update Screen...', flush=True)
+    print(GetTime() + 'Update Screen...', flush=True)
     #反向图片
     #Himage = ImageChops.invert(Himage)
     epd.display(epd.getbuffer(Himage))
     #屏幕休眠
-    print(GetTime()+strtime2 + ' Screen Sleep...', flush=True)
+    print(GetTime() + 'Screen Sleep...', flush=True)
     epd.sleep()
-    print(GetTime()+strtime2 + ' Time.sleep...', flush=True)
+    print(GetTime() + 'Time.sleep...', flush=True)
+    
     if(intTime >= 1 and intTime <= 6): #2点～6点 每小时刷新一次
         time.sleep(3600)
     else:
