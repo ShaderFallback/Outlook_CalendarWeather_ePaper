@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding:utf-8 -*-
 #=================BiliBili日出东水===================
 #                   墨水屏天气台历
 #----------------------------------------------------
@@ -18,7 +20,7 @@ import logging
 from O365 import Account
 from collections import OrderedDict
 import re
-
+import threading
 fontSize16 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 16)
 fontSize20 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 20)
 fontSize25 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 25)
@@ -35,24 +37,28 @@ countUpdate_3 = False
 countUpdate_4 = False
 SwitchDay = True
 tempArray = ["---"]*23
+scheduleDic = OrderedDict()
+
+def DatetimeNow():
+    return datetime.datetime.now() 
 
 def GetO365(maxCount):
+    global scheduleDic
+    scheduleDic = OrderedDict()
                     #这里填写客户端ID                       #API权限中的密码(第一次生成时才能看到)
-    credentials = ('44322eca5-007c-4e3358cta-e8bicd8g010d', 'W3-7Q~lqRJBLGXnJGy3qCJfusaRXAyzwcaH.o')
+    credentials = ('xxxxxxxxxxxxxxxxxx', 'xxxxxxxxxxxxxxxxxxxxxxxx')
     account = Account(credentials)
     schedule = account.schedule()
     #查询从今天开始一个月内的日历
     #也可以指定 datetime(2022, 5, 30)
-    now_time = datetime.datetime.now()
+    now_time =DatetimeNow()
     end_time = datetime.timedelta(days =30)
     range_time = (now_time + end_time).strftime('%Y-%m-%d')
 
     q = schedule.new_query('start').greater_equal(now_time)
     q.chain('and').on_attribute('end').less_equal(range_time)
 
-    getSchedule = schedule.get_events(query=q, include_recurring=True) 
-    
-    scheduleDic = OrderedDict()
+    getSchedule = schedule.get_events(query=q, include_recurring=True)     
     scheduleCount = 0
     for event in getSchedule:
         #获取位置
@@ -114,8 +120,10 @@ def GetTemp():
 
         (r.json()['cityInfo']['updateTime'])        #更新时间22
         ]
+        print(GetTime() + 'UpdateWeather...ok', flush=True)
     except:
         tempList = ["---"]*23
+        print(GetTime() + 'UpdateWeather...Fail!', flush=True)
         return tempList
     else:
         return tempList
@@ -174,28 +182,23 @@ def UpdateTemp(timeUpdate):
         countUpdate_3 = True
         countUpdate_4 = True
         tempArray = UpdateData()
-        epd.Clear()
         print(GetTime()+'Reset Update..', flush=True)
 
     # 天气API 只有这几个点会更新,减少无用请求
     intTime = int(strtime5)
-
+    print(GetTime() + 'Start Update Weather...', flush=True)
     if(countUpdate_1 and  intTime == 7):
         tempArray = UpdateData()
         countUpdate_1 = False
-        print(GetTime() + 'UpdateWeather', flush=True)
     elif(countUpdate_2 and intTime == 11):
         tempArray = UpdateData()
         countUpdate_2 = False
-        print(GetTime() + 'UpdateWeather', flush=True)
     elif(countUpdate_3 and intTime == 16):
         tempArray = UpdateData()
         countUpdate_3 = False
-        print(GetTime() + 'UpdateWeather', flush=True)
     elif(countUpdate_4 and intTime == 21 ):
         tempArray = UpdateData()
         countUpdate_4 = False
-        print(GetTime() + 'UpdateWeather', flush=True)
 
 def ReplaceLowTemp(lowTemp):
     temp_L = lowTemp.replace("低温","")
@@ -268,12 +271,18 @@ def DrawHorizontalDar(draw,Himage,timeUpdate):
     draw.text((330,55),windTemp, font = fontSize16, fill = 0)
 
 def DrawSchedule(draw,timeUpdate):
-    print(GetTime()+'Get Schedule Date...', flush=True)
-    scheduleDic = GetO365(6)
+    global scheduleDic
+    if(len(scheduleDic) <= 0):
+        elemDic = OrderedDict()
+        elemDic["location"] = ""
+        elemDic["dateTime"] = DatetimeNow()
+        elemDic["subjectStr"] = "日程获取中请稍等..."
+        elemDic["bodyStr"] = ""
+        scheduleDic[0] = elemDic
     for x in range(0,len(scheduleDic)):
         t = scheduleDic[x]["dateTime"]
         subjectStr = scheduleDic[x]["subjectStr"]
-        bodyStr = scheduleDic[x]["bodyStr"]
+        #bodyStr = scheduleDic[x]["bodyStr"]
         #黑方框标记今日
         fillColor = 0
         if(int(t.day) == int(timeUpdate.strftime('%d'))):
@@ -284,7 +293,19 @@ def DrawSchedule(draw,timeUpdate):
         #日程标题
         draw.text((90,95 + x*50),StrLenCur(str(subjectStr)), font = fontSize25, fill = 0)
         #draw.text((15,80 + x*100),bodyStr, font = fontSize16, fill = 0)
-    print(GetTime()+'Schedule Done!', flush=True)
+
+def NetworkThreading():
+    global scheduleDic
+    while (True):
+        timeUpdate = DatetimeNow()
+        UpdateTemp(timeUpdate)
+        try:
+            print(GetTime() + 'Start Update Schedule...', flush=True)
+            scheduleDic = GetO365(6)
+            print(GetTime() + 'Update Schedule ok!', flush=True)
+        except:
+            print(GetTime() + 'Update Schedule Fail!', flush=True)
+        time.sleep(600)
 
 def WeatherStrSwitch(index):
     if index == 0:
@@ -302,7 +323,7 @@ def WeatherSwitch(index):
     elif index == 2:
         return 14
 
-def DrawWeather(draw):
+def DrawWeather(draw,Himage):
     for x in range(0,3):
         draw.text((430,90 + x *100),WeatherStrSwitch(x), font = fontSize16, fill = 0)
         strWeather = tempArray[WeatherSwitch(x)]
@@ -319,55 +340,60 @@ def DrawWeather(draw):
         windTemp = tempArray[WeatherSwitch(x)+1] + tempArray[WeatherSwitch(x)+2]
         draw.text((555,90 + x *100),windTemp, font = fontSize16, fill = 0)
 
-UpdateData()
+def UpdateTime():
+    #刷新循环
+    while (True):
+        print(GetTime()+'Epd7in5 Init...', flush=True)
+        epd = epd7in5.EPD()
+        epd.init()
+        print(GetTime()+'Epd7in5 Init ok!', flush=True)
+        
+        timeUpdate = DatetimeNow()
 
-#刷新循环
-while (True):
-    print(GetTime()+'Epd7in5 Init...', flush=True)
-    epd = epd7in5.EPD()
-    epd.init()
+        #时间
+        strtime2 = timeUpdate.strftime('%H:%M')
+        #小时
+        strtime5 = timeUpdate.strftime('%H')      
+        intTime = int(strtime5)
+        #新建空白图片
+        Himage = Image.new('1', (epd.width, epd.height), 255)
+        draw = ImageDraw.Draw(Himage)
 
-    timeUpdate = datetime.datetime.now()
-    
-    #更新天气
-    UpdateTemp(timeUpdate)
-    print(GetTime()+'Weather Update Done !', flush=True)
-    #时间
-    strtime2 = timeUpdate.strftime('%H:%M')
-    #小时
-    strtime5 = timeUpdate.strftime('%H')      
-    intTime = int(strtime5)
-    #新建空白图片
-    Himage = Image.new('1', (epd.width, epd.height), 128)
-    draw = ImageDraw.Draw(Himage)
+        #显示背景
+        bmp = Image.open(rootPath + '/pic/bg.png')
+        Himage.paste(bmp,(0,0))
 
-    #显示背景
-    bmp = Image.open(rootPath + '/pic/bg.png')
-    Himage.paste(bmp,(0,0))
+        #绘制水平栏
+        DrawHorizontalDar(draw,Himage,timeUpdate)
 
-    #绘制水平栏
-    DrawHorizontalDar(draw,Himage,timeUpdate)
+        #绘制日程
+        DrawSchedule(draw,timeUpdate)
 
-    #绘制日程
-    DrawSchedule(draw,timeUpdate)
+        #绘制天气预报
+        DrawWeather(draw,Himage)
 
-    #绘制天气预报
-    DrawWeather(draw)
+        #画线(x开始值，y开始值，x结束值，y结束值)
+        #draw.rectangle((280, 90, 280, 290), fill = 0)
 
-    #画线(x开始值，y开始值，x结束值，y结束值)
-    #draw.rectangle((280, 90, 280, 290), fill = 0)
+        #刷新屏幕
+        print(GetTime() + 'Start Update Screen...', flush=True)
+        #反向图片
+        #Himage = ImageChops.invert(Himage)
+        #Himage.save(rootPath +"/test.png")
+        #bmp = Image.open(rootPath + '/test.png')
 
-    #刷新屏幕
-    print(GetTime() + 'Update Screen...', flush=True)
-    #反向图片
-    #Himage = ImageChops.invert(Himage)
-    epd.display(epd.getbuffer(Himage))
-    #屏幕休眠
-    print(GetTime() + 'Screen Sleep...', flush=True)
-    epd.sleep()
-    print(GetTime() + 'Time.sleep...', flush=True)
-    
-    if(intTime >= 1 and intTime <= 6): #2点～6点 每小时刷新一次
-        time.sleep(3600)
-    else:
-        time.sleep(600)
+        epd.display(epd.getbuffer(Himage))
+        #屏幕休眠
+        print(GetTime() + 'Update Screen ok!', flush=True)
+        epd.sleep()
+        
+        print(GetTime() + 'Screen Sleep...', flush=True)
+        if(intTime >= 1 and intTime <= 6): #2点～6点 每小时刷新一次
+            time.sleep(3600)
+        else:
+            time.sleep(600)
+
+timeThreading = threading.Thread(target=UpdateTime, args=())
+timeThreading.start()
+networkThreading = threading.Thread(target=NetworkThreading, args=())
+networkThreading.start()
