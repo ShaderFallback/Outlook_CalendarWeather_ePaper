@@ -21,6 +21,8 @@ from O365 import Account
 from collections import OrderedDict
 import re
 import threading
+import feedparser
+
 fontSize16 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 16)
 fontSize20 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 20)
 fontSize25 = ImageFont.truetype(rootPath + '/lib/字体.ttf', 25)
@@ -139,7 +141,7 @@ def UpdateWeatherIcon(tempType):  #匹配天气类型图标
         tempType == "扬沙" or tempType == "强沙尘暴" or
         tempType == "雾霾"):
         return "沙尘暴.bmp"
-    elif(tempType == "--"):
+    elif(tempType == "---"):
         return "无天气类型.bmp"
     return (tempType + ".bmp")
 
@@ -276,7 +278,7 @@ def DrawSchedule(draw,timeUpdate):
         elemDic = OrderedDict()
         elemDic["location"] = ""
         elemDic["dateTime"] = DatetimeNow()
-        elemDic["subjectStr"] = "日程获取中请稍等..."
+        elemDic["subjectStr"] = "暂无日程..."
         elemDic["bodyStr"] = ""
         scheduleDic[0] = elemDic
     for x in range(0,len(scheduleDic)):
@@ -294,9 +296,46 @@ def DrawSchedule(draw,timeUpdate):
         draw.text((90,95 + x*50),StrLenCur(str(subjectStr)), font = fontSize25, fill = 0)
         #draw.text((15,80 + x*100),bodyStr, font = fontSize16, fill = 0)
 
+def DrawRss(draw):
+    global scheduleDic
+    if(len(scheduleDic) <= 0):
+        elemDic = OrderedDict()
+        elemDic["location"] = ""
+        elemDic["dateTime"] = DatetimeNow()
+        elemDic["subjectStr"] = "暂无日程..."
+        elemDic["bodyStr"] = ""
+        scheduleDic[0] = elemDic
+    for x in range(0,len(scheduleDic)):
+        subjectStr = scheduleDic[x]["subjectStr"]
+        #rss标题
+        draw.text((10,95 + x*50),StrLenCur(str(subjectStr)), font = fontSize25, fill = 0)
+
+def GetRss():
+    global scheduleDic
+    while(True):
+        d = feedparser.parse("https://www.solidot.org/index.rss")
+        intLen = len(d["entries"])
+
+        for i in range(0,intLen):
+            elemDic = OrderedDict()
+            elemDic["location"] = ""
+            elemDic["dateTime"] = DatetimeNow()
+            elemDic["subjectStr"] = d["entries"][i]["title"]
+            elemDic["bodyStr"] = ""
+            scheduleDic[i] = elemDic
+
+        timeUpdate = DatetimeNow()
+        UpdateTemp(timeUpdate)
+        strtime5 = timeUpdate.strftime('%H')      
+        intTime = int(strtime5)
+        if(intTime >= 1 and intTime <= 6): #2点～6点 每2小时刷新一次
+            time.sleep(7200)
+        else:
+            time.sleep(3600)
+
 def NetworkThreading():
     global scheduleDic
-    while (True):
+    while(True):
         timeUpdate = DatetimeNow()
         UpdateTemp(timeUpdate)
         try:
@@ -304,8 +343,20 @@ def NetworkThreading():
             scheduleDic = GetO365(6)
             print(GetTime() + 'Update Schedule ok!', flush=True)
         except:
+            elemDic = OrderedDict()
+            elemDic["location"] = ""
+            elemDic["dateTime"] = DatetimeNow()
+            elemDic["subjectStr"] = "日程获取失败!稍后重试.."
+            elemDic["bodyStr"] = ""
+            scheduleDic[0] = elemDic
             print(GetTime() + 'Update Schedule Fail!', flush=True)
-        time.sleep(600)
+
+        strtime5 = timeUpdate.strftime('%H')      
+        intTime = int(strtime5)
+        if(intTime >= 1 and intTime <= 6): #2点～6点 每小时刷新一次
+            time.sleep(3600)
+        else:
+            time.sleep(600)
 
 def WeatherStrSwitch(index):
     if index == 0:
@@ -347,9 +398,7 @@ def UpdateTime():
         epd = epd7in5.EPD()
         epd.init()
         print(GetTime()+'Epd7in5 Init ok!', flush=True)
-        
         timeUpdate = DatetimeNow()
-
         #时间
         strtime2 = timeUpdate.strftime('%H:%M')
         #小时
@@ -367,7 +416,8 @@ def UpdateTime():
         DrawHorizontalDar(draw,Himage,timeUpdate)
 
         #绘制日程
-        DrawSchedule(draw,timeUpdate)
+        #DrawSchedule(draw,timeUpdate)
+        DrawRss(draw)
 
         #绘制天气预报
         DrawWeather(draw,Himage)
@@ -393,7 +443,10 @@ def UpdateTime():
         else:
             time.sleep(600)
 
+#networkThreading = threading.Thread(target=NetworkThreading, args=())
+#networkThreading.start()
+networkGetRss = threading.Thread(target=GetRss, args=())
+networkGetRss.start()
 timeThreading = threading.Thread(target=UpdateTime, args=())
 timeThreading.start()
-networkThreading = threading.Thread(target=NetworkThreading, args=())
-networkThreading.start()
+
