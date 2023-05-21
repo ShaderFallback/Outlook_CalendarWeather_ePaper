@@ -3,6 +3,10 @@
 ![image](https://github.com/ShaderFallback/RaspberryPi-WeatherStation/blob/master/photo/demo1.jpg)
 ![image](https://github.com/ShaderFallback/RaspberryPi-WeatherStation/blob/master/photo/demo2.jpg)
 
+### 显示时间天气预报和RSS 新闻
+- **默认显示RSS新闻，新闻源可以修改代码316 行 ** 
+- **如果想改回日程，取消注释446，447 行，并注释448，449行 ** 
+
 ### 硬件清单
 - **树莓派 ZeroW** 
 - **微雪7.5inch e-Paper 墨水屏(黑白)** 
