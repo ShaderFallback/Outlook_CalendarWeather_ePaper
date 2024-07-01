@@ -9,7 +9,7 @@ curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath + "/lib")
 
-import epd7in5
+import epd7in5_V2
 import epdconfig
 import time
 from PIL import Image,ImageDraw,ImageFont,ImageChops
@@ -395,8 +395,9 @@ def UpdateTime():
     #刷新循环
     while (True):
         print(GetTime()+'Epd7in5 Init...', flush=True)
-        epd = epd7in5.EPD()
+        epd = epd7in5_V2.EPD()
         epd.init()
+        epd.Clear()
         print(GetTime()+'Epd7in5 Init ok!', flush=True)
         timeUpdate = DatetimeNow()
         #时间
@@ -405,7 +406,10 @@ def UpdateTime():
         strtime5 = timeUpdate.strftime('%H')      
         intTime = int(strtime5)
         #新建空白图片
-        Himage = Image.new('1', (epd.width, epd.height), 255)
+        Himage = Image.new('1', (640, 384), 255)
+        #缩放图片
+        Himage = Himage.resize((epd.width,epd.height),resample=Image.NEAREST)
+
         draw = ImageDraw.Draw(Himage)
 
         #显示背景
